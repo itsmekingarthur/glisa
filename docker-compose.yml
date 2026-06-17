@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: discord_clone
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  server:
+    build: ./server
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/discord_clone?schema=public"
+      JWT_SECRET: "super-secret-key-change-in-production-12345"
+      PORT: 3001
+    depends_on:
+      - postgres
+    command: >
+      sh -c "npx prisma db push && npm run dev"
+
+  client:
+    build: ./client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:

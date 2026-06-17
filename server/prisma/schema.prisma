@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedServers Server[]
+  memberships  ServerMember[]
+  messages     Message[]
+  reactions    Reaction[]
+  voiceState   VoiceState?
+}
+
+model Server {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner      User           @relation(fields: [ownerId], references: [id])
+  members    ServerMember[]
+  channels   Channel[]
+  inviteCode String         @unique @default(uuid())
+}
+
+model ServerMember {
+  id       String @id @default(uuid())
+  userId   String
+  serverId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  server Server @relation(fields: [serverId], references: [id])
+
+  @@unique([userId, serverId])
+}
+
+model Channel {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   @default("text")
+  serverId  String
+  createdAt DateTime @default(now())
+
+  server   Server    @relation(fields: [serverId], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  channelId String
+  createdAt DateTime @default(now())
+  editedAt  DateTime?
+  replyToId String?
+
+  user    User      @relation(fields: [userId], references: [id])
+  channel Channel   @relation(fields: [channelId], references: [id])
+  replyTo Message?  @relation("MessageReply", fields: [replyToId], references: [id])
+  replies Message[] @relation("MessageReply")
+  reactions Reaction[]
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  emoji     String
+  userId    String
+  messageId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  message Message @relation(fields: [messageId], references: [id])
+
+  @@unique([userId, messageId, emoji])
+}
+
+model VoiceState {
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  channelId String
+  muted     Boolean @default(false)
+  deafened  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+}

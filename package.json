@@ -1,0 +1,10 @@
+{
+  "name": "discord-clone",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "build": "cd server && npx prisma generate && cd ../client && npm run build",
+    "start": "cd server && npx prisma db push && npx tsx src/index.ts"
+  }
+}
