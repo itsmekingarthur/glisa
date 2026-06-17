@@ -4,14 +4,12 @@ import { useAuthStore } from "../store/useAuthStore";
 import { api } from "../lib/api";
 
 export default function ChannelSidebar() {
-  const { currentServer, currentChannel, selectChannel } = useServerStore();
+  const { currentServer, currentChannel, selectChannel, connectedVoiceChannel } = useServerStore();
   const user = useAuthStore((s) => s.user);
   const [showCreate, setShowCreate] = useState(false);
   const [channelName, setChannelName] = useState("");
 
   if (!currentServer) return <div className="w-60 bg-[#2b2d31] shrink-0" />;
-
-  const { connectedVoiceChannel, joinVoice, leaveVoice } = useServerStore();
 
   const handleCreate = async () => {
     if (!channelName.trim()) return;
@@ -26,8 +24,9 @@ export default function ChannelSidebar() {
     useServerStore.getState().fetchServers();
   };
 
-  const textChannels = currentServer.channels.filter(c => c.type === "text");
-  const voiceChannels = currentServer.channels.filter(c => c.type === "voice");
+  const channels = currentServer.channels || [];
+  const textChannels = channels.filter((c: any) => c.type === "text");
+  const voiceChannels = channels.filter((c: any) => c.type === "voice");
 
   return (
     <div className="w-60 bg-[#2b2d31] flex flex-col shrink-0">
@@ -41,7 +40,7 @@ export default function ChannelSidebar() {
             <button onClick={() => setShowCreate(true)} className="text-[#949ba4] hover:text-white text-lg leading-none">+</button>
           )}
         </div>
-        {textChannels.map(c => (
+        {textChannels.map((c: any) => (
           <button
             key={c.id}
             onClick={() => selectChannel(c)}
@@ -55,7 +54,7 @@ export default function ChannelSidebar() {
         {voiceChannels.length > 0 && (
           <>
             <div className="text-xs font-semibold text-[#949ba4] uppercase tracking-wider px-2 pt-4 pb-1">Voice Channels</div>
-            {voiceChannels.map(c => {
+            {voiceChannels.map((c: any) => {
               const isConnected = connectedVoiceChannel === c.id;
               return (
                 <button

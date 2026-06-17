@@ -32,6 +32,7 @@ interface ServerState {
   removeMessage: (msgId: string) => void;
   setReactions: (messageId: string, reactions: Reaction[]) => void;
   setOnlineUsers: (ids: string[]) => void;
+  addOnlineUser: (id: string) => void;
   joinVoice: (channelId: string, user: { id: string; username: string }) => void;
   leaveVoice: () => void;
 }
@@ -48,8 +49,10 @@ export const useServerStore = create<ServerState>((set, get) => ({
   voiceParticipants: [],
 
   fetchServers: async () => {
-    const data = await api.servers.list();
-    set({ servers: data });
+    try {
+      const data = await api.servers.list();
+      set({ servers: data || [] });
+    } catch { set({ servers: [] }); }
   },
 
   selectServer: (server) => {
@@ -58,23 +61,22 @@ export const useServerStore = create<ServerState>((set, get) => ({
 
   selectChannel: (channel) => {
     set({ currentChannel: channel });
-    if (channel.type === "voice") {
-      // Don't fetch messages for voice channels
-    } else {
+    if (channel.type !== "voice") {
       get().fetchMessages(channel.id);
     }
   },
 
   fetchMessages: async (channelId) => {
     if (!channelId) return;
-    const data = await api.messages.list(channelId);
-    set({ messages: data });
+    try {
+      const data = await api.messages.list(channelId);
+      set({ messages: data || [] });
+    } catch {}
   },
 
   sendMessage: async (channelId, content, replyToId) => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-    // Optimistically add a temp message immediately
     const tempId = "temp-" + Date.now();
     const tempMsg: any = {
       id: tempId,
@@ -91,7 +93,6 @@ export const useServerStore = create<ServerState>((set, get) => ({
     }
     set((s) => ({ messages: [...s.messages, tempMsg] }));
 
-    // Send to API
     try {
       const res = await fetch("/api/messages/send", {
         method: "POST",
@@ -100,7 +101,6 @@ export const useServerStore = create<ServerState>((set, get) => ({
       });
       if (res.ok) {
         const saved = await res.json();
-        // Replace temp message with real one
         set((s) => ({ messages: s.messages.map(m => m.id === tempId ? { ...saved, reactions: m.reactions } : m) }));
       }
     } catch {}
@@ -142,6 +142,7 @@ export const useServerStore = create<ServerState>((set, get) => ({
   removeMessage: (msgId) => set((s) => ({ messages: s.messages.filter(m => m.id !== msgId) })),
   setReactions: (messageId, reactions) => set((s) => ({ messages: s.messages.map(m => m.id === messageId ? { ...m, reactions } : m) })),
   setOnlineUsers: (ids) => set({ onlineUsers: new Set(ids) }),
+  addOnlineUser: (id) => set((s) => { const set = new Set(s.onlineUsers); set.add(id); return { onlineUsers: set }; }),
 
   joinVoice: (channelId, user) => {
     set({ connectedVoiceChannel: channelId, voiceParticipants: [{ id: user.id, username: user.username }] });

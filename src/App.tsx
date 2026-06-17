@@ -11,14 +11,14 @@ import MemberList from "./components/MemberList";
 
 export default function App() {
   const { user, token, logout, init } = useAuthStore();
-  const { addMessage, updateMessage, removeMessage, setReactions, currentChannel, setOnlineUsers } = useServerStore();
+  const { addMessage, updateMessage, removeMessage, setReactions, currentChannel, addOnlineUser } = useServerStore();
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => { init(); }, []);
 
   useEffect(() => {
     if (user) {
-      setOnlineUsers([user.id]);
+      addOnlineUser(user.id);
     }
   }, [user?.id]);
 
@@ -26,11 +26,17 @@ export default function App() {
     if (token) {
       const s = connectSocket(token);
       s.on("message:new", (msg: any) => {
-        addMessage(msg);
+        if (msg && msg.id) addMessage(msg);
       });
-      s.on("message:updated", (msg: any) => updateMessage(msg));
-      s.on("message:deleted", (msgId: string) => removeMessage(msgId));
-      s.on("message:reacted", (data: any) => setReactions(data.messageId, data.reactions));
+      s.on("message:updated", (msg: any) => {
+        if (msg && msg.id) updateMessage(msg);
+      });
+      s.on("message:deleted", (msgId: string) => {
+        if (msgId) removeMessage(msgId);
+      });
+      s.on("message:reacted", (data: any) => {
+        if (data && data.messageId) setReactions(data.messageId, data.reactions);
+      });
     }
     return () => { disconnectSocket(); };
   }, [token]);
