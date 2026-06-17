@@ -27,7 +27,7 @@ export default function ServerSidebar() {
         className="w-12 h-12 rounded-2xl bg-[#5865f2] hover:rounded-xl hover:bg-[#4752c4] transition-all duration-200 flex items-center justify-center text-white font-bold text-lg shrink-0"
         title="Home"
       >
-        G
+        <img src="/favicon.png" className="w-7 h-7" alt="Glisa" />
       </button>
       <div className="w-8 h-[2px] bg-[#35363c] rounded" />
       {servers.map((s) => (
