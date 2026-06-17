@@ -27,16 +27,16 @@ async function request(path: string, options: RequestInit = {}) {
 export const api = {
   auth: {
     register: (data: { username: string; email: string; password: string }) =>
-      request("/api/auth/register", { method: "POST", body: JSON.stringify(data) }),
+      request("/auth/register", { method: "POST", body: JSON.stringify(data) }),
     login: (data: { email: string; password: string }) =>
-      request("/api/auth/login", { method: "POST", body: JSON.stringify(data) }),
+      request("/auth/login", { method: "POST", body: JSON.stringify(data) }),
   },
   servers: {
-    list: () => request("/api/servers"),
-    create: (name: string) => request("/api/servers", { method: "POST", body: JSON.stringify({ name }) }),
-    join: (id: string) => request(`/api/servers/${id}/join`, { method: "POST" }),
+    list: () => request("/servers"),
+    create: (name: string) => request("/servers", { method: "POST", body: JSON.stringify({ name }) }),
+    join: (id: string) => request(`/servers/${id}/join`, { method: "POST" }),
   },
   messages: {
-    list: (channelId: string) => request(`/api/messages?channelId=${channelId}`),
+    list: (channelId: string) => request(`/messages?channelId=${channelId}`),
   },
 };
