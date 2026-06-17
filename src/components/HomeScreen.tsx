@@ -33,7 +33,7 @@ export default function HomeScreen() {
     if (searchQ.length < 1) { setSearchResults([]); return; }
     const t = setTimeout(async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/users?q=${encodeURIComponent(searchQ)}`, {
+      const res = await fetch(`/api/friends?q=${encodeURIComponent(searchQ)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) setSearchResults(await res.json());

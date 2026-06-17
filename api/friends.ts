@@ -7,9 +7,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
   if (req.method === "GET") {
-    const { type } = req.query;
-    const status = type === "pending" ? "pending" : "accepted";
+    const { type, q } = req.query;
 
+    // User search
+    if (q && typeof q === "string" && q.length >= 1) {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, username")
+        .ilike("username", `%${q}%`)
+        .neq("id", userId)
+        .limit(10);
+      if (error) return res.status(500).json({ error: error.message });
+
+      // Check friendship status for each result
+      const userIds = (data || []).map((u: any) => u.id);
+      let friendStatus: any = {};
+      if (userIds.length > 0) {
+        const { data: fData } = await supabase
+          .from("friendships")
+          .select("user_id, friend_id, status")
+          .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+          .in("user_id", [userId, ...userIds])
+          .in("friend_id", [userId, ...userIds]);
+        if (fData) {
+          for (const f of fData) {
+            const otherId = f.user_id === userId ? f.friend_id : f.user_id;
+            if (userIds.includes(otherId)) {
+              friendStatus[otherId] = f.status;
+            }
+          }
+        }
+      }
+
+      const results = (data || []).map((u: any) => ({
+        ...u,
+        friend_status: friendStatus[u.id] || null,
+      }));
+      return res.json(results);
+    }
+
+    // Friend list
+    const status = type === "pending" ? "pending" : "accepted";
     const { data, error } = await supabase
       .from("friendships")
       .select("*, friend:friend_id(id, username), user:user_id(id, username)")
