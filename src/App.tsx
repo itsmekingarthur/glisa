@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { useServerStore } from "./store/useServerStore";
-import { connectSocket, disconnectSocket, getSocket } from "./lib/socket";
+import { connectSocket, disconnectSocket } from "./lib/socket";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ServerSidebar from "./components/ServerSidebar";
@@ -11,23 +11,29 @@ import MemberList from "./components/MemberList";
 
 export default function App() {
   const { user, token, logout, init } = useAuthStore();
-  const { addMessage, updateMessage, removeMessage, setReactions, currentChannel } = useServerStore();
+  const { addMessage, updateMessage, removeMessage, setReactions, currentChannel, setOnlineUsers } = useServerStore();
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => { init(); }, []);
 
   useEffect(() => {
+    if (user) {
+      setOnlineUsers([user.id]);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
     if (token) {
       const s = connectSocket(token);
       s.on("message:new", (msg: any) => {
-        if (msg.channel_id === currentChannel?.id) addMessage(msg);
+        addMessage(msg);
       });
       s.on("message:updated", (msg: any) => updateMessage(msg));
       s.on("message:deleted", (msgId: string) => removeMessage(msgId));
       s.on("message:reacted", (data: any) => setReactions(data.messageId, data.reactions));
     }
     return () => { disconnectSocket(); };
-  }, [token, currentChannel?.id]);
+  }, [token]);
 
   if (!user || !token) {
     return isLogin ? <Login onToggle={() => setIsLogin(false)} /> : <Register onToggle={() => setIsLogin(true)} />;

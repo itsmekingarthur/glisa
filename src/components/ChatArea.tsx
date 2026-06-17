@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useServerStore } from "../store/useServerStore";
 import { useAuthStore } from "../store/useAuthStore";
+import VoiceChannel from "./VoiceChannel";
 
 const EMOJIS = ["😀","😂","❤️","🔥","👍","🎉","😢","😡"];
 
@@ -28,15 +29,7 @@ export default function ChatArea() {
   }
 
   if (currentChannel.type === "voice") {
-    return (
-      <div className="flex-1 flex items-center justify-center text-[#949ba4]">
-        <div className="text-center space-y-2">
-          <div className="text-6xl mb-4">🔊</div>
-          <p className="text-2xl font-semibold text-[#dbdee1]">{currentChannel.name}</p>
-          <p>Voice channel selected (P2P WebRTC)</p>
-        </div>
-      </div>
-    );
+    return <VoiceChannel />;
   }
 
   const handleSend = async (e: React.FormEvent) => {

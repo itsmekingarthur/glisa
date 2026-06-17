@@ -11,6 +11,8 @@ export default function ChannelSidebar() {
 
   if (!currentServer) return <div className="w-60 bg-[#2b2d31] shrink-0" />;
 
+  const { connectedVoiceChannel, joinVoice, leaveVoice } = useServerStore();
+
   const handleCreate = async () => {
     if (!channelName.trim()) return;
     const token = localStorage.getItem("token");
@@ -53,17 +55,26 @@ export default function ChannelSidebar() {
         {voiceChannels.length > 0 && (
           <>
             <div className="text-xs font-semibold text-[#949ba4] uppercase tracking-wider px-2 pt-4 pb-1">Voice Channels</div>
-            {voiceChannels.map(c => (
-              <button
-                key={c.id}
-                onClick={() => selectChannel(c)}
-                className={`w-full flex items-center gap-1.5 px-2 py-1 rounded text-sm ${
-                  currentChannel?.id === c.id ? "bg-[#3f4147] text-white" : "text-[#949ba4] hover:bg-[#35363c] hover:text-[#dbdee1]"
-                }`}
-              >
-                <span className="text-lg">🔊</span> {c.name}
-              </button>
-            ))}
+            {voiceChannels.map(c => {
+              const isConnected = connectedVoiceChannel === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => selectChannel(c)}
+                  className={`w-full flex items-center gap-1.5 px-2 py-1 rounded text-sm border ${
+                    isConnected
+                      ? "bg-[#1f3d2e] text-white border-green-500"
+                      : currentChannel?.id === c.id
+                        ? "bg-[#3f4147] text-white border-transparent"
+                        : "text-[#949ba4] hover:bg-[#35363c] hover:text-[#dbdee1] border-transparent"
+                  }`}
+                >
+                  <span className="text-lg">{isConnected ? "🔊" : "🔇"}</span>
+                  {c.name}
+                  {isConnected && <span className="ml-auto w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+                </button>
+              );
+            })}
           </>
         )}
       </div>

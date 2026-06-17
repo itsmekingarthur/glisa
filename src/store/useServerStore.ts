@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { supabase } from "../lib/supabase";
 import { api } from "../lib/api";
 
 interface User { id: string; username: string; }
@@ -17,6 +16,8 @@ interface ServerState {
   loading: boolean;
   replyingTo: Message | null;
   onlineUsers: Set<string>;
+  connectedVoiceChannel: string | null;
+  voiceParticipants: { id: string; username: string }[];
   fetchServers: () => Promise<void>;
   selectServer: (server: Server) => void;
   selectChannel: (channel: Channel) => void;
@@ -31,6 +32,8 @@ interface ServerState {
   removeMessage: (msgId: string) => void;
   setReactions: (messageId: string, reactions: Reaction[]) => void;
   setOnlineUsers: (ids: string[]) => void;
+  joinVoice: (channelId: string, user: { id: string; username: string }) => void;
+  leaveVoice: () => void;
 }
 
 export const useServerStore = create<ServerState>((set, get) => ({
@@ -41,6 +44,8 @@ export const useServerStore = create<ServerState>((set, get) => ({
   loading: false,
   replyingTo: null,
   onlineUsers: new Set(),
+  connectedVoiceChannel: null,
+  voiceParticipants: [],
 
   fetchServers: async () => {
     const data = await api.servers.list();
@@ -53,7 +58,11 @@ export const useServerStore = create<ServerState>((set, get) => ({
 
   selectChannel: (channel) => {
     set({ currentChannel: channel });
-    get().fetchMessages(channel.id);
+    if (channel.type === "voice") {
+      // Don't fetch messages for voice channels
+    } else {
+      get().fetchMessages(channel.id);
+    }
   },
 
   fetchMessages: async (channelId) => {
@@ -63,27 +72,57 @@ export const useServerStore = create<ServerState>((set, get) => ({
   },
 
   sendMessage: async (channelId, content, replyToId) => {
-    // Saved via API call - Realtime will broadcast it back
     const token = localStorage.getItem("token");
-    await fetch("/api/messages/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ channelId, content, replyToId }),
-    });
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    // Optimistically add a temp message immediately
+    const tempId = "temp-" + Date.now();
+    const tempMsg: any = {
+      id: tempId,
+      content,
+      user_id: user.id,
+      user: { id: user.id, username: user.username },
+      channel_id: channelId,
+      created_at: new Date().toISOString(),
+      reply_to_id: replyToId || null,
+      reactions: [],
+    };
+    if (replyToId) {
+      tempMsg.reply_to = get().messages.find(m => m.id === replyToId);
+    }
+    set((s) => ({ messages: [...s.messages, tempMsg] }));
+
+    // Send to API
+    try {
+      const res = await fetch("/api/messages/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ channelId, content, replyToId }),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        // Replace temp message with real one
+        set((s) => ({ messages: s.messages.map(m => m.id === tempId ? { ...saved, reactions: m.reactions } : m) }));
+      }
+    } catch {}
   },
 
   editMessage: async (messageId, content) => {
     const token = localStorage.getItem("token");
-    await fetch("/api/messages", {
+    const res = await fetch("/api/messages?messageId=" + messageId, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ messageId, content }),
+      body: JSON.stringify({ content }),
     });
+    if (res.ok) {
+      const updated = await res.json();
+      get().updateMessage(updated);
+    }
   },
 
   deleteMessage: async (messageId) => {
     const token = localStorage.getItem("token");
-    await fetch(`/api/messages/${messageId}`, { method: "DELETE", headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+    await fetch("/api/messages?messageId=" + messageId, { method: "DELETE", headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+    get().removeMessage(messageId);
   },
 
   toggleReaction: async (messageId, emoji) => {
@@ -96,9 +135,19 @@ export const useServerStore = create<ServerState>((set, get) => ({
   },
 
   setReplyingTo: (msg) => set({ replyingTo: msg }),
-  addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+  addMessage: (msg) => set((s) => ({
+    messages: s.messages.some(m => m.id === msg.id) ? s.messages : [...s.messages, msg],
+  })),
   updateMessage: (msg) => set((s) => ({ messages: s.messages.map(m => m.id === msg.id ? { ...m, ...msg } : m) })),
   removeMessage: (msgId) => set((s) => ({ messages: s.messages.filter(m => m.id !== msgId) })),
   setReactions: (messageId, reactions) => set((s) => ({ messages: s.messages.map(m => m.id === messageId ? { ...m, reactions } : m) })),
   setOnlineUsers: (ids) => set({ onlineUsers: new Set(ids) }),
+
+  joinVoice: (channelId, user) => {
+    set({ connectedVoiceChannel: channelId, voiceParticipants: [{ id: user.id, username: user.username }] });
+  },
+
+  leaveVoice: () => {
+    set({ connectedVoiceChannel: null, voiceParticipants: [] });
+  },
 }));
