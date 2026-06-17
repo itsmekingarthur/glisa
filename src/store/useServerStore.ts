@@ -18,6 +18,8 @@ interface ServerState {
   onlineUsers: Set<string>;
   connectedVoiceChannel: string | null;
   voiceParticipants: { id: string; username: string }[];
+  isMuted: boolean;
+  isDeafened: boolean;
   fetchServers: () => Promise<void>;
   selectServer: (server: Server) => void;
   selectChannel: (channel: Channel) => void;
@@ -35,6 +37,8 @@ interface ServerState {
   addOnlineUser: (id: string) => void;
   joinVoice: (channelId: string, user: { id: string; username: string }) => void;
   leaveVoice: () => void;
+  toggleMute: () => void;
+  toggleDeafen: () => void;
 }
 
 export const useServerStore = create<ServerState>((set, get) => ({
@@ -47,6 +51,8 @@ export const useServerStore = create<ServerState>((set, get) => ({
   onlineUsers: new Set(),
   connectedVoiceChannel: null,
   voiceParticipants: [],
+  isMuted: false,
+  isDeafened: false,
 
   fetchServers: async () => {
     try {
@@ -145,10 +151,13 @@ export const useServerStore = create<ServerState>((set, get) => ({
   addOnlineUser: (id) => set((s) => { const set = new Set(s.onlineUsers); set.add(id); return { onlineUsers: set }; }),
 
   joinVoice: (channelId, user) => {
-    set({ connectedVoiceChannel: channelId, voiceParticipants: [{ id: user.id, username: user.username }] });
+    set({ connectedVoiceChannel: channelId, voiceParticipants: [{ id: user.id, username: user.username }], isMuted: false, isDeafened: false });
   },
 
   leaveVoice: () => {
-    set({ connectedVoiceChannel: null, voiceParticipants: [] });
+    set({ connectedVoiceChannel: null, voiceParticipants: [], isMuted: false, isDeafened: false });
   },
+
+  toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
+  toggleDeafen: () => set((s) => ({ isDeafened: !s.isDeafened })),
 }));

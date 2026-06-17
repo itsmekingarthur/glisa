@@ -2,7 +2,7 @@ import { useServerStore } from "../store/useServerStore";
 import { useAuthStore } from "../store/useAuthStore";
 
 export default function VoiceChannel() {
-  const { currentChannel, connectedVoiceChannel, voiceParticipants, joinVoice, leaveVoice } = useServerStore();
+  const { currentChannel, connectedVoiceChannel, voiceParticipants, isMuted, isDeafened, joinVoice, leaveVoice, toggleMute, toggleDeafen } = useServerStore();
   const user = useAuthStore((s) => s.user);
 
   if (!currentChannel || currentChannel.type !== "voice") return null;
@@ -51,12 +51,33 @@ export default function VoiceChannel() {
                   </div>
                 ))}
               </div>
-              <button
-                onClick={leaveVoice}
-                className="px-8 py-3 bg-red-600 hover:bg-red-500 rounded-full font-semibold text-sm transition-colors flex items-center gap-2 mx-auto"
-              >
-                <span>📞</span> Leave Voice
-              </button>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={toggleMute}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-colors ${
+                    isMuted ? "bg-red-600 text-white" : "bg-[#2b2d31] hover:bg-[#35363c] text-[#dbdee1]"
+                  }`}
+                  title={isMuted ? "Unmute" : "Mute Mic"}
+                >
+                  {isMuted ? "🔇" : "🎤"}
+                </button>
+                <button
+                  onClick={toggleDeafen}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition-colors ${
+                    isDeafened ? "bg-red-600 text-white" : "bg-[#2b2d31] hover:bg-[#35363c] text-[#dbdee1]"
+                  }`}
+                  title={isDeafened ? "Undeafen" : "Deafen"}
+                >
+                  {isDeafened ? "🔇" : "🎧"}
+                </button>
+                <button
+                  onClick={leaveVoice}
+                  className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-lg text-white transition-colors"
+                  title="Leave Voice"
+                >
+                  📞
+                </button>
+              </div>
             </div>
           )}
         </div>
