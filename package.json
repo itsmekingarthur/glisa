@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "install:all": "cd server && npm install && cd ../client && npm install",
-    "build": "cd server && npx prisma generate && cd ../client && npm run build",
+    "build": "cd server && npm install && npx prisma generate && cd ../client && npm install && npm run build",
     "start": "cd server && npx prisma db push && npx tsx src/index.ts"
   }
 }
