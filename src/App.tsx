@@ -8,10 +8,12 @@ import ServerSidebar from "./components/ServerSidebar";
 import ChannelSidebar from "./components/ChannelSidebar";
 import ChatArea from "./components/ChatArea";
 import MemberList from "./components/MemberList";
+import DMList from "./components/DMList";
+import HomeScreen from "./components/HomeScreen";
 
 export default function App() {
   const { user, token, logout, init } = useAuthStore();
-  const { addMessage, updateMessage, removeMessage, setReactions, currentChannel, addOnlineUser } = useServerStore();
+  const { addMessage, updateMessage, removeMessage, setReactions, currentChannel, currentServer, addOnlineUser } = useServerStore();
   const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => { init(); }, []);
@@ -45,12 +47,24 @@ export default function App() {
     return isLogin ? <Login onToggle={() => setIsLogin(false)} /> : <Register onToggle={() => setIsLogin(true)} />;
   }
 
+  const showHome = !currentServer;
+
   return (
     <div className="flex h-screen">
       <ServerSidebar />
-      <ChannelSidebar />
-      <ChatArea />
-      <MemberList />
+      {showHome ? (
+        <>
+          <DMList />
+          <HomeScreen />
+          <div className="w-0" />
+        </>
+      ) : (
+        <>
+          <ChannelSidebar />
+          <ChatArea />
+          <MemberList />
+        </>
+      )}
       <div className="fixed bottom-0 right-0 p-3 text-xs text-[#949ba4] bg-[#1e1f22] px-4 rounded-tl-lg flex items-center gap-2 z-10">
         <span className="w-2 h-2 rounded-full bg-green-500" />
         {user.username}

@@ -5,6 +5,7 @@ import { api } from "../lib/api";
 
 export default function ServerSidebar() {
   const { servers, currentServer, selectServer, fetchServers } = useServerStore();
+  const isHome = currentServer === null;
   const token = useAuthStore((s) => s.token);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
@@ -24,7 +25,9 @@ export default function ServerSidebar() {
     <div className="w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 gap-2 shrink-0 overflow-y-auto">
       <button
         onClick={() => { selectServer(null as any); }}
-        className="w-12 h-12 rounded-2xl bg-[#5865f2] hover:rounded-xl hover:bg-[#4752c4] transition-all duration-200 flex items-center justify-center text-white font-bold text-lg shrink-0"
+        className={`w-12 h-12 rounded-2xl transition-all duration-200 flex items-center justify-center text-white font-bold text-lg shrink-0 ${
+          currentServer === null ? "bg-[#5865f2] rounded-xl" : "bg-[#35363c] hover:bg-[#5865f2] hover:rounded-xl"
+        }`}
         title="Home"
       >
         <img src="/favicon.png" className="w-7 h-7" alt="Glisa" />

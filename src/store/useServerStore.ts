@@ -23,7 +23,7 @@ interface ServerState {
   isSpeaking: boolean;
   setSpeaking: (v: boolean) => void;
   fetchServers: () => Promise<void>;
-  selectServer: (server: Server) => void;
+  selectServer: (server: Server | null) => void;
   selectChannel: (channel: Channel) => void;
   fetchMessages: (channelId: string) => Promise<void>;
   sendMessage: (channelId: string, content: string, replyToId?: string) => Promise<void>;
