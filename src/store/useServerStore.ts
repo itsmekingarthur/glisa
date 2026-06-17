@@ -20,6 +20,8 @@ interface ServerState {
   voiceParticipants: { id: string; username: string }[];
   isMuted: boolean;
   isDeafened: boolean;
+  isSpeaking: boolean;
+  setSpeaking: (v: boolean) => void;
   fetchServers: () => Promise<void>;
   selectServer: (server: Server) => void;
   selectChannel: (channel: Channel) => void;
@@ -53,6 +55,7 @@ export const useServerStore = create<ServerState>((set, get) => ({
   voiceParticipants: [],
   isMuted: false,
   isDeafened: false,
+  isSpeaking: false,
 
   fetchServers: async () => {
     try {
@@ -160,4 +163,5 @@ export const useServerStore = create<ServerState>((set, get) => ({
 
   toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
   toggleDeafen: () => set((s) => ({ isDeafened: !s.isDeafened })),
+  setSpeaking: (v) => set({ isSpeaking: v }),
 }));

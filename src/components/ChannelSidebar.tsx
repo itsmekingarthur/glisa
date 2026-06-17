@@ -3,7 +3,7 @@ import { useServerStore } from "../store/useServerStore";
 import { useAuthStore } from "../store/useAuthStore";
 
 export default function ChannelSidebar() {
-  const { currentServer, currentChannel, selectChannel, connectedVoiceChannel, voiceParticipants, isMuted, isDeafened, toggleMute, toggleDeafen, leaveVoice } = useServerStore();
+  const { currentServer, currentChannel, selectChannel, connectedVoiceChannel, voiceParticipants, isSpeaking, isMuted, isDeafened, toggleMute, toggleDeafen, leaveVoice } = useServerStore();
   const user = useAuthStore((s) => s.user);
   const [showCreate, setShowCreate] = useState(false);
   const [channelName, setChannelName] = useState("");
@@ -72,22 +72,28 @@ export default function ChannelSidebar() {
                     {isConnected && <span className="ml-auto w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
                   </button>
                   {/* Connected user avatar below the voice channel */}
-                  {isConnected && voiceParticipants.map((p) => (
+                  {isConnected && voiceParticipants.map((p) => {
+                    const isMe = p.id === user?.id;
+                    const speaking = isMe && isSpeaking;
+                    return (
                     <div key={p.id} className="flex items-center gap-2 pl-8 pr-2 py-1 mt-0.5 rounded bg-[#1a2b1f] mx-1">
                       <div className="relative">
-                        <div className="w-7 h-7 rounded-full bg-[#5865f2] flex items-center justify-center text-white text-[10px] font-bold">
+                        <div className={`w-7 h-7 rounded-full bg-[#5865f2] flex items-center justify-center text-white text-[10px] font-bold ${speaking ? "ring-2 ring-green-400 ring-offset-1 ring-offset-[#1a2b1f]" : ""}`}>
                           {p.username[0].toUpperCase()}
                         </div>
                         <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[#1a2b1f] animate-pulse" />
                       </div>
                       <span className="text-xs font-medium text-[#dbdee1]">{p.username}</span>
-                      <div className="flex gap-0.5 ml-auto">
-                        <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
-                        <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: "0.15s" }} />
-                        <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: "0.3s" }} />
-                      </div>
+                      {speaking && (
+                        <div className="flex gap-0.5 ml-auto">
+                          <div className="w-1 h-1 rounded-full bg-green-300 animate-ping" />
+                          <div className="w-1 h-1 rounded-full bg-green-400 animate-ping" style={{ animationDelay: "0.15s" }} />
+                          <div className="w-1 h-1 rounded-full bg-green-500 animate-ping" style={{ animationDelay: "0.3s" }} />
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })}
@@ -100,7 +106,9 @@ export default function ChannelSidebar() {
         <div className="shrink-0 bg-[#1e1f22] border-t border-[#35363c] px-3 py-2.5 space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-semibold text-green-400">Voice Connected</span>
+            <span className={`text-xs font-semibold ${isSpeaking ? "text-green-300 animate-pulse" : "text-green-400"}`}>
+              {isSpeaking ? "Speaking..." : "Voice Connected"}
+            </span>
           </div>
           <div className="text-[11px] text-[#949ba4] pl-4 truncate">
             {voiceChannels.find((c: any) => c.id === connectedVoiceChannel)?.name || "Voice Channel"}

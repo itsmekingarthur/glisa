@@ -1,13 +1,14 @@
 import { useServerStore } from "../store/useServerStore";
 import { useAuthStore } from "../store/useAuthStore";
+import { useVoiceDetector } from "../hooks/useVoiceDetector";
 
 export default function VoiceChannel() {
-  const { currentChannel, connectedVoiceChannel, voiceParticipants, isMuted, isDeafened, joinVoice, leaveVoice, toggleMute, toggleDeafen } = useServerStore();
+  const { currentChannel, connectedVoiceChannel, voiceParticipants, isSpeaking, isMuted, isDeafened, joinVoice, leaveVoice, toggleMute, toggleDeafen } = useServerStore();
   const user = useAuthStore((s) => s.user);
+  const isConnected = connectedVoiceChannel === currentChannel?.id;
+  useVoiceDetector(isConnected);
 
   if (!currentChannel || currentChannel.type !== "voice") return null;
-
-  const isConnected = connectedVoiceChannel === currentChannel.id;
 
   return (
     <div className="flex-1 flex flex-col bg-[#313338]">
@@ -31,25 +32,41 @@ export default function VoiceChannel() {
             <div className="space-y-4">
               <div className="bg-[#1e1f22] rounded-lg p-4 space-y-2">
                 <p className="text-xs font-semibold text-[#949ba4] uppercase tracking-wider">Connected</p>
-                {voiceParticipants.map((p) => (
+                {voiceParticipants.map((p) => {
+                  const isMe = p.id === user?.id;
+                  const speaking = isMe && isSpeaking;
+                  return (
                   <div key={p.id} className="flex items-center gap-3 px-2 py-1.5 rounded bg-[#2b2d31]">
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white font-bold text-sm">
+                      <div className={`w-10 h-10 rounded-full bg-[#5865f2] flex items-center justify-center text-white font-bold text-sm ${speaking ? "ring-2 ring-green-400 ring-offset-2 ring-offset-[#2b2d31]" : ""}`}>
                         {p.username[0].toUpperCase()}
                       </div>
                       <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-[#2b2d31]" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold">{p.username}</p>
-                      <p className="text-xs text-green-400">Voice Connected</p>
+                      <p className={`text-xs ${speaking ? "text-green-300 animate-pulse" : "text-green-400"}`}>
+                        {speaking ? "Speaking..." : "Voice Connected"}
+                      </p>
                     </div>
                     <div className="flex gap-1 ml-auto">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
+                      {speaking ? (
+                        <>
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-300 animate-ping" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" style={{ animationDelay: "0.15s" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" style={{ animationDelay: "0.3s" }} />
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
+                        </>
+                      )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="flex items-center justify-center gap-3">
                 <button
