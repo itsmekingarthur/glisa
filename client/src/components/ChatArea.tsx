@@ -22,16 +22,6 @@ function sameDay(d1: string, d2: string) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-function timeSince(t: string) {
-  const diff = Date.now() - new Date(t).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
 export default function ChatArea() {
   const { selectedChannel, messages, setMessages, addMessage, updateMessage, removeMessage, replyingTo, setReplyingTo, updateMessageReactions } = useServerStore();
   const user = useAuthStore((s) => s.user);

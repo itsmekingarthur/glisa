@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { useServerStore } from "./store/useServerStore";
-import { connectSocket, disconnectSocket, getSocket } from "./lib/socket";
+import { connectSocket, disconnectSocket } from "./lib/socket";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ServerSidebar from "./components/ServerSidebar";
