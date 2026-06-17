@@ -23,13 +23,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const userIds = (data || []).map((u: any) => u.id);
       let friendStatus: any = {};
       if (userIds.length > 0) {
-        const { data: fData } = await supabase
+        const { data: fData, error: fErr } = await supabase
           .from("friendships")
           .select("user_id, friend_id, status")
           .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
           .in("user_id", [userId, ...userIds])
           .in("friend_id", [userId, ...userIds]);
-        if (fData) {
+        if (!fErr && fData) {
           for (const f of fData) {
             const otherId = f.user_id === userId ? f.friend_id : f.user_id;
             if (userIds.includes(otherId)) {
@@ -54,7 +54,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
       .eq("status", status);
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return res.json([]);
+      }
+      return res.status(500).json({ error: error.message });
+    }
 
     const items = (data || []).map((f: any) => {
       const other = f.user_id === userId ? f.friend : f.user;
