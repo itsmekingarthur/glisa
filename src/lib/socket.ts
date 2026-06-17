@@ -56,7 +56,7 @@ export function connectSocket(token: string) {
       else if (event === "message:reacted") reactCb = cb;
     },
     emit: (event: string, data: any) => {
-      if (event === "message:send") apiCall("POST", "/api/messages/send", data);
+      if (event === "message:send") apiCall("POST", "/api/messages", data);
       else if (event === "message:edit") apiCall("PATCH", `/api/messages?id=${data.messageId}`, { content: data.content });
       else if (event === "message:delete") apiCall("DELETE", `/api/messages?id=${data.messageId}`);
       else if (event === "message:react") apiCall("POST", "/api/reactions", data);
@@ -87,7 +87,7 @@ export function getSocket() {
       else if (event === "message:reacted") reactCb = cb;
     },
     emit: (event: string, data: any) => {
-      if (event === "message:send") apiCall("POST", "/api/messages/send", data);
+      if (event === "message:send") apiCall("POST", "/api/messages", data);
       else if (event === "message:edit") apiCall("PATCH", `/api/messages?id=${data.messageId}`, { content: data.content });
       else if (event === "message:delete") apiCall("DELETE", `/api/messages?id=${data.messageId}`);
       else if (event === "message:react") apiCall("POST", "/api/reactions", data);

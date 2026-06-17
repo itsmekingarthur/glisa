@@ -103,7 +103,7 @@ export const useServerStore = create<ServerState>((set, get) => ({
     set((s) => ({ messages: [...s.messages, tempMsg] }));
 
     try {
-      const res = await fetch("/api/messages/send", {
+      const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ channelId, content, replyToId }),
