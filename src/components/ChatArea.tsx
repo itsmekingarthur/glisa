@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { useServerStore } from "../store/useServerStore";
 import { useAuthStore } from "../store/useAuthStore";
 import VoiceChannel from "./VoiceChannel";
+import WelcomeDashboard from "./WelcomeDashboard";
 
 const EMOJIS = ["😀","😂","❤️","🔥","👍","🎉","😢","😡"];
 
@@ -17,15 +18,7 @@ export default function ChatArea() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length, currentChannel?.id]);
 
   if (!currentChannel) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-[#949ba4]">
-        <div className="text-center space-y-2">
-          <div className="text-6xl mb-4">💬</div>
-          <p className="text-2xl font-semibold text-[#dbdee1]">Select a channel</p>
-          <p>Choose a channel from the sidebar to start chatting</p>
-        </div>
-      </div>
-    );
+    return <WelcomeDashboard />;
   }
 
   if (currentChannel.type === "voice") {
